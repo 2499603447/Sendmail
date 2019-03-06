@@ -5,33 +5,31 @@ import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
-import mail_setting
+import configparser
 
 class Mail:
     '''
-    self.mail_host = "smtp.sina.com"  # 设置服务器
-    self.mail_user = "xiaowang"  # 用户名
-    self.mail_pass = "XXXXX"  # 口令
+    self.port = "25" # 设置默认端口号
+    self.mail_host = "smtp.163.com"  # 设置服务器
     self.mail_sender = 'xiaowang@sina.com'  # 发送者
+    self.mail_user = "xiaowang"  # 用户名
+    self.mail_pass = "XXXXX"  # 授权码
     '''
 
-    def __init__(self, mail_host="210.77.136.200", mail_user="user", mail_pass="pass",
-                 mail_sender="da山<das@ctrchina.cn>", port=465):
-        # 第三方 SMTP 服务
+    def __init__(self, port=25, mail_host="smtp.163.com", mail_sender="15601599167@163.com", mail_user="15601599167@163.com", mail_pass="zdz199309092093"):
+
+        self.port = port
         self.mail_host = mail_host
+        self.mail_sender = mail_sender
         self.mail_user = mail_user
         self.mail_pass = mail_pass
-        self.mail_sender = mail_sender
-        self.port = port
 
-
-    def SendHtmlMail(self, mail_tolist, mail_subject, mail_body, fileList, mail_cclist, mail_bcclist):
+    def SendHtmlMail(self, mail_tolist, mail_subject, mail_body, mail_cclist, mail_bcclist):
         '''
         发送Html邮件
         :param mail_tolist: 接收者邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']
         :param mail_subject: 邮件主题
         :param mail_body: 邮件体主题内容
-        :param fileList: 附件列表，就文件名列表（包含路径）
         :param mail_cclist: 抄送邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']，默认不传
         :param mail_bcclist: 密送邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']，默认不传
         :return:
@@ -64,7 +62,6 @@ class Mail:
         :param mail_body: 邮件体主题内容
         :param fileList: 附件列表，就文件名列表（包含路径）
         :param mail_cclist: 抄送邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']，默认不传
-        :param mail_bcclist: 密送邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']，默认不传
         :return:
         '''
         msg = MIMEMultipart()
@@ -85,11 +82,8 @@ class Mail:
         if len(mail_cclist) > 0:
             msg['Cc'] = ",".join(mail_cclist)
             mail_tolist.extend(mail_cclist)
-        # if len(mail_bcclist) > 0:
-        #     msg['Bcc'] = ",".join(mail_bcclist)
-        #     mail_tolist.extend(mail_bcclist)
 
-        message = ''
+        result = ''
         try:
             server = smtplib.SMTP()
             server.connect(self.mail_host)
@@ -99,19 +93,16 @@ class Mail:
             result = '邮件发送成功'
 
         except smtplib.SMTPException as e:
-            # print "Error: 无法发送邮件", e
-            message = 'Error: 无法发送邮件:'
-        return message
+            result = 'Error: 无法发送邮件:'
+        return result
 
-    def SendMail(self, mail_subject, mail_body, mail_tolist,mail_cclist):
+    def SendMail(self, mail_subject, mail_body, mail_tolist, mail_cclist):
         '''
         发送普通邮件
-        :param mail_tolist: 接收者邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']
         :param mail_subject: 邮件主题
         :param mail_body: 邮件体主题内容
-        :param fileList: 附件列表，就文件名列表（包含路径）
+        :param mail_tolist: 接收者邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']
         :param mail_cclist: 抄送邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']，默认不传
-        :param mail_bcclist: 密送邮件列表，如:['xiaoli@sina.com','xiaoMa@qq.com']，默认不传
         :return:
         '''
         message = MIMEText(mail_body, _subtype='plain', _charset='utf-8')
@@ -127,7 +118,7 @@ class Mail:
         try:
             server = smtplib.SMTP()
             server.connect(self.mail_host)
-            server.login(self.mail_user,self.mail_pass)
+            server.login(self.mail_user, self.mail_pass)
             server.sendmail(self.mail_sender, mail_tolist, message.as_string())
             server.close()
             result = '邮件发送成功'
@@ -135,31 +126,3 @@ class Mail:
         except smtplib.SMTPException as e:
             result = 'Error: 无法发送邮件'
         return result
-
-    def test(self,mail_body,mail_subject,mail_sendto_user,fileName):
-
-        fileList = []
-        fileList.append(fileName)
-
-        mail_tolist = []
-        mail_tolist.append(mail_sendto_user)
-
-        # 多个人，中间用逗号分隔
-        # cc_tolist = ['xx<aa@CTRCHINA.CN>','dd<dd@CTRCHINA.CN>']
-        cc_tolist =[]
-        mail_bcclist = []
-        print("Subject:%s\n" % mail_subject)
-        print("Body:%s\n" % mail_body)
-        print("To:%s\n" % mail_tolist)
-        print("Cc:%s\n" % cc_tolist)
-        #result = self.SendMail( mail_subject, mail_body, mail_tolist,cc_tolist)
-        result = self.SendMailAttach(mail_tolist,mail_subject, mail_body,fileList, cc_tolist)
-        return result
-
-
-setobj = mail_setting.mail_setting()
-m = Mail(setobj.mail_host,setobj.mail_user,setobj.mail_pass,setobj.mail_send_user,setobj.port)
-#result = m.test('信息1',u'小测试测试',setobj.mail_receive_user)
-fileName="/home/dezhou/workspace/email/20190221/mail.txt"
-result = m.test('信息1',u'小测试测试',setobj.mail_receive_user,fileName)
-print (result)
